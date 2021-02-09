@@ -1,4 +1,9 @@
-import * as turf from '@turf/turf';
+const turf = require('@turf/turf');
+const fetch = require('cross-fetch');
+require('dotenv').config()
+
+const ORS_KEY = process.env.ORS_KEY;
+const OTM_KEY = process.env.OTM_KEY;
 
 const getWaypoints = (route) => {
 	// Create an array of cumulative times in n hours intervals
@@ -34,11 +39,11 @@ const getWaypoints = (route) => {
 	return coordinateArray;
 }
 
-const getRoute = async (allData, radius, categories, ORS_KEY, OTM_KEY, setSelectedPois, setUpdatedRoute, setBuffer, setIsComplete) => {
+const getRoute = async (coordinates, radius, categories) => {
 
 	// Get initial route from start and end coordinates
 	const routeData = {
-		coordinates: [allData.dataFrom.features[0].geometry.coordinates, allData.dataTo.features[0].geometry.coordinates],
+		coordinates: coordinates,
 		//options : {avoid_features: ["highways"]}
 	};
 
@@ -56,8 +61,6 @@ const getRoute = async (allData, radius, categories, ORS_KEY, OTM_KEY, setSelect
 	// Create buffer of selected radius
 	const turfRoute = turf.lineString(initialRoute.features[0].geometry.coordinates.map(el => [el[1], el[0]]), { name: 'buffer' });
 	const buffered = turf.buffer(turfRoute, radius, {units: "kilometers"});
-
-	setBuffer(buffered);
 	
 	// Get pois
 	const bbox = turf.bbox(buffered);
@@ -89,11 +92,9 @@ const getRoute = async (allData, radius, categories, ORS_KEY, OTM_KEY, setSelect
 	}
 	selectedPoisArray = selectedPoisArray.filter((el,index, arr) => arr.indexOf(arr.find(subel => subel.id === el.id)) === index);
 
-	setSelectedPois(selectedPoisArray);
-
 	// update route to visit all suggested pois
 	const poiCoordinates = selectedPoisArray.map(el => el.geometry.coordinates);
-	const newCoordinates = [allData.dataFrom.features[0].geometry.coordinates, ...poiCoordinates, allData.dataTo.features[0].geometry.coordinates];
+	const newCoordinates = [coordinates[0], ...poiCoordinates, coordinates[1]];
 	const radiusArray = new Array(newCoordinates.length).fill(-1);
 
 	const updatedRouteData = {
@@ -117,14 +118,12 @@ const getRoute = async (allData, radius, categories, ORS_KEY, OTM_KEY, setSelect
 		throw new Error('Updated route could not be calculated');
 	} 
 
-	setUpdatedRoute(updatedRoute);
-
 	// Create buffer of updated route
 	// const turfNewRoute = turf.lineString(updatedRoute.features[0].geometry.coordinates.map(el => [el[1], el[0]]), { name: 'buffer' });
 	// const newBuffer = turf.buffer(turfNewRoute, radius, {units: "kilometers"});
 
 	// setBuffer(newBuffer);
-	setIsComplete(true);
+	return JSON.stringify({buffered: buffered, updatedRoute: updatedRoute, selectedPoisArray: selectedPoisArray})
 }
 
-export {getRoute};
+module.exports = { getRoute };
