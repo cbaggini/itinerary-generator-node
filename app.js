@@ -14,10 +14,18 @@ app.get('/', (req, res) => {
   res.send('Welcome to the itinerary generator!')
 })
 
+app.get('/geocode', (req, res) => {
+	helper.geocode(req.query.text)
+	.then(response => res.send(response))
+	.catch(err => res.send(err));	
+})
+
 app.post('/itinerary', (req, res) => {
-	helper.getRoute(req.body.coordinates, req.body.radius, req.body.categories).then(response => res.send(response));
+	helper.getRoute(req.body.coordinates, req.body.radius, req.body.categories)
+	.then(response => res.send(response))
+	.catch(err => res.send(err));	
 })
 
 app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`)
+  console.log(`Itinerary app listening at http://localhost:${port}`)
 })
