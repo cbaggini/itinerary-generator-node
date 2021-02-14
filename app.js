@@ -8,7 +8,7 @@ const app = express()
 app.use(cors())
 app.use(bodyParser.json())
 
-const port = 3000
+const PORT = process.env.PORT || 8080;
 
 app.get('/', (req, res) => {
   res.send('Welcome to the itinerary generator!')
@@ -26,6 +26,9 @@ app.post('/itinerary', (req, res) => {
 	.catch(err => res.send(err));	
 })
 
-app.listen(port, () => {
-  console.log(`Itinerary app listening at http://localhost:${port}`)
-})
+app.listen(PORT, () => {
+  console.log(`App listening on port ${PORT}`);
+  console.log('Press Ctrl+C to quit.');
+});
+
+module.exports = app;
