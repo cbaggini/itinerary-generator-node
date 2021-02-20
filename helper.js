@@ -48,6 +48,9 @@ const getWaypoints = (route) => {
 
 const getRoute = async (coordinates, radius, categories) => {
 
+	let isError = false;
+	let errorMessage = "";
+
 	// Get initial route from start and end coordinates
 	const routeData = {
 		coordinates: coordinates,
@@ -62,18 +65,35 @@ const getRoute = async (coordinates, radius, categories) => {
 		},
 		body: JSON.stringify(routeData) 
 	  })
-	  .then(response => response.json())
+	  .then(response => {if (response.status === 'ok') {
+			return response.json()
+			} else {
+				isError = true;
+				errorMessage = 'Initial route could not be calculated';
+				return null
+			}
+		})
 	  .catch((err) => {console.log("An error occurred: " + err);});
-	
-	// Create buffer of selected radius
+
+	if (isError) {
+		return JSON.stringify({status: 500, error: errorMessage})
+	}
+
 	const turfRoute = turf.lineString(initialRoute.features[0].geometry.coordinates.map(el => [el[1], el[0]]), { name: 'buffer' });
 	const buffered = turf.buffer(turfRoute, radius, {units: "kilometers"});
-	
-	// Get pois
 	const bbox = turf.bbox(buffered);
+		
+	// Get pois
 	const cats = categories.join('%2C');
 	const pois = await fetch(`https://api.opentripmap.com/0.1/en/places/bbox?lon_min=${bbox[1]}&lat_min=${bbox[0]}&lon_max=${bbox[3]}&lat_max=${bbox[2]}&kinds=${cats}&format=geojson&apikey=${OTM_KEY}`)
-		.then(response => response.json())
+		.then(response => {if (response.status === 'ok') {
+			return response.json()
+			} else {
+				isError = true;
+				errorMessage = 'no POIs found';
+				return null
+			}
+		} )
 		.then(data => {
 			// Select points in buffer area and with high popularity score
 			if (data.features) {
@@ -81,13 +101,12 @@ const getRoute = async (coordinates, radius, categories) => {
 				return points;
 			} else {
 				return null;
-			}
-						
+			}			
 		})
-	
-	if (!pois) {
-		throw new Error('no POIs found');
-	} 
+
+	if (isError) {
+		return JSON.stringify({status: 500, error: errorMessage})
+	}
 	// Get array of suggested pois, remove duplicates
 	const coordinateArray = getWaypoints(initialRoute);
 	const turfPois = turf.featureCollection(pois);
@@ -118,18 +137,24 @@ const getRoute = async (coordinates, radius, categories) => {
 		},
 		body: JSON.stringify(updatedRouteData) 
 	  })
-	  .then(response => response.json())
+	  .then(response => {if (response.status === 'ok') {
+			return response.json()
+			} else {
+				isError = true;
+				errorMessage = 'Updated route could not be calculated';
+				return null
+			}
+		} )
 	  .catch((err) => {console.log("An error occurred: " + err);});
-	
-	if (!updatedRoute.features) {
-		throw new Error('Updated route could not be calculated');
-	} 
 
 	// Create buffer of updated route
 	// const turfNewRoute = turf.lineString(updatedRoute.features[0].geometry.coordinates.map(el => [el[1], el[0]]), { name: 'buffer' });
 	// const newBuffer = turf.buffer(turfNewRoute, radius, {units: "kilometers"});
 
 	// setBuffer(newBuffer);
+	if (isError) {
+		return JSON.stringify({status: 500, error: errorMessage})
+	}
 	return JSON.stringify({buffered: buffered, updatedRoute: updatedRoute, selectedPoisArray: selectedPoisArray})
 }
 
