@@ -1,6 +1,6 @@
+require("dotenv").config();
 const turf = require("@turf/turf");
 const fetch = require("cross-fetch");
-require("dotenv").config();
 
 const ORS_KEY = process.env.ORS_KEY;
 const OTM_KEY = process.env.OTM_KEY;
@@ -197,4 +197,32 @@ const getRoute = async (coordinates, radius, categories) => {
   });
 };
 
-module.exports = { geocode, getRoute };
+const getPoiInfo = async (poiId) => {
+  let isError = false;
+  console.log(
+    `​https://api.opentripmap.com/0.1/en​/places​/xid​/${poiId}?apikey=${OTM_KEY}`
+  );
+  const poiInfo = await fetch(
+    `​https://api.opentripmap.com/0.1/en​/places​/xid​/${poiId}?apikey=${OTM_KEY}`
+  )
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.xid) {
+        return data;
+      } else {
+        isError = true;
+        errorMessage = "POI not found";
+        return null;
+      }
+    })
+    .catch((err) => {
+      console.log("An error occurred: " + err);
+    });
+  console.log(poiInfo);
+  if (isError) {
+    return JSON.stringify({ status: 500, error: errorMessage });
+  }
+  return JSON.stringify({ poiInfo: poiInfo });
+};
+
+module.exports = { geocode, getRoute, getPoiInfo };
