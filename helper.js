@@ -199,11 +199,12 @@ const getRoute = async (coordinates, radius, categories) => {
 
 const getPoiInfo = async (poiId) => {
   let isError = false;
-  console.log(
-    `​https://api.opentripmap.com/0.1/en​/places​/xid​/${poiId}?apikey=${OTM_KEY}`
-  );
+
   const poiInfo = await fetch(
-    `​https://api.opentripmap.com/0.1/en​/places​/xid​/${poiId}?apikey=${OTM_KEY}`
+    `​https://api.opentripmap.com/0.1/en​/places​/xid​/${poiId}?apikey=${OTM_KEY}`.replace(
+      /\u200B/g,
+      ""
+    )
   )
     .then((response) => response.json())
     .then((data) => {
@@ -218,7 +219,7 @@ const getPoiInfo = async (poiId) => {
     .catch((err) => {
       console.log("An error occurred: " + err);
     });
-  console.log(poiInfo);
+
   if (isError) {
     return JSON.stringify({ status: 500, error: errorMessage });
   }
