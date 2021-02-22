@@ -5,6 +5,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 
 const app = express();
+// TODO: setup CORS for localhost or Netlify frontend
 app.use(cors());
 app.use(bodyParser.json());
 
