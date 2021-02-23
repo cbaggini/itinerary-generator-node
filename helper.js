@@ -193,6 +193,7 @@ const getRoute = async (coordinates, radius, categories) => {
   return JSON.stringify({
     buffered: buffered,
     updatedRoute: updatedRoute,
+    pois: pois,
     selectedPoisArray: selectedPoisArray,
   });
 };
