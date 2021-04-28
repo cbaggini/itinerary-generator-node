@@ -2,7 +2,6 @@ const helper = require("./helper");
 
 const express = require("express");
 const cors = require("cors");
-const bodyParser = require("body-parser");
 
 const app = express();
 
@@ -16,9 +15,9 @@ const corsOptions = {
   optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
 };
 
-// TODO: setup CORS for localhost or Netlify frontend
 app.use(cors(corsOptions));
-app.use(bodyParser.json());
+app.use(express.json());
+app.use(express.urlencoded({ extended: false, limit: "20mb" }));
 
 app.get("/", (req, res) => {
   res.send("Welcome to the itinerary generator!");
