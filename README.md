@@ -1,3 +1,5 @@
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=cbaggini_itinerary-generator-node&metric=alert_status)](https://sonarcloud.io/dashboard?id=cbaggini_itinerary-generator-node)
+
 <p align="center">
 
   <h3 align="center">Road trip itinerary generator - Backend</h3>
@@ -13,4 +15,3 @@
 <p>
   The command to update GCP deployment is gcloud app deploy
 </p>
-
