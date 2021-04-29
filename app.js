@@ -3,7 +3,8 @@ const helper = require("./helper");
 const express = require("express");
 const cors = require("cors");
 
-const app = express();
+let app = express();
+app.disable("x-powered-by");
 
 const PORT = process.env.PORT || 8080;
 const ORIGIN = process.env.PORT
