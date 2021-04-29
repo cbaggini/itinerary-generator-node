@@ -185,8 +185,8 @@ const getRoute = async (coordinates, radius, categories) => {
   // Create buffer of updated route
   // const turfNewRoute = turf.lineString(updatedRoute.features[0].geometry.coordinates.map(el => [el[1], el[0]]), { name: 'buffer' });
   // const newBuffer = turf.buffer(turfNewRoute, radius, {units: "kilometers"});
-
   // setBuffer(newBuffer);
+
   if (isError) {
     return JSON.stringify({ status: 500, error: errorMessage });
   }
@@ -200,6 +200,7 @@ const getRoute = async (coordinates, radius, categories) => {
 
 const getPoiInfo = async (poiId) => {
   let isError = false;
+  let errorMessage = "";
 
   const poiInfo = await fetch(
     `​https://api.opentripmap.com/0.1/en​/places​/xid​/${poiId}?apikey=${OTM_KEY}`.replace(
