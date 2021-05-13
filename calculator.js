@@ -5,20 +5,7 @@ const fetch = require("cross-fetch");
 const ORS_KEY = process.env.ORS_KEY;
 const OTM_KEY = process.env.OTM_KEY;
 
-const geocode = async (query) => {
-  const queryData = await fetch(
-    `https://api.openrouteservice.org/geocode/search?api_key=${ORS_KEY}&text=${query.replace(
-      / /g,
-      "-"
-    )}`
-  )
-    .then((response) => response.json())
-    .catch((err) => {
-      console.log("An error occurred: " + err);
-    });
-  return JSON.stringify({ queryData: queryData });
-};
-
+// private function to get itinerary waypoints
 const getWaypoints = (route) => {
   // Create an array of cumulative times in n hours intervals
   const totalTime = route.features[0].properties.summary.duration;
@@ -53,6 +40,20 @@ const getWaypoints = (route) => {
     }
   }
   return coordinateArray;
+};
+
+const geocode = async (query) => {
+  const queryData = await fetch(
+    `https://api.openrouteservice.org/geocode/search?api_key=${ORS_KEY}&text=${query.replace(
+      / /g,
+      "-"
+    )}`
+  )
+    .then((response) => response.json())
+    .catch((err) => {
+      console.log("An error occurred: " + err);
+    });
+  return JSON.stringify({ queryData: queryData });
 };
 
 const getRoute = async (coordinates, radius, categories) => {

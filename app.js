@@ -1,4 +1,4 @@
-const helper = require("./helper");
+const calculator = require("./calculator");
 
 const express = require("express");
 const cors = require("cors");
@@ -25,21 +25,21 @@ app.get("/", (req, res) => {
 });
 
 app.get("/geocode", (req, res) => {
-  helper
+  calculator
     .geocode(req.query.text)
     .then((response) => res.send(response))
     .catch((err) => res.send(err));
 });
 
 app.get("/poi", (req, res) => {
-  helper
+  calculator
     .getPoiInfo(req.query.xid)
     .then((response) => res.send(response))
     .catch((err) => res.send(err));
 });
 
 app.post("/itinerary", (req, res) => {
-  helper
+  calculator
     .getRoute(req.body.coordinates, req.body.radius, req.body.categories)
     .then((response) => res.send(response))
     .catch((err) => res.send(err));
