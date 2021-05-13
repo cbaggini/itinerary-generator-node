@@ -53,7 +53,7 @@ const geocode = async (query) => {
     .catch((err) => {
       console.log("An error occurred: " + err);
     });
-  return JSON.stringify({ queryData: queryData });
+  return { queryData: queryData };
 };
 
 const getRoute = async (coordinates, radius, categories) => {

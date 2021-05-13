@@ -27,7 +27,7 @@ app.get("/", (req, res) => {
 app.get("/geocode", (req, res) => {
   calculator
     .geocode(req.query.text)
-    .then((response) => res.send(response))
+    .then((response) => res.json(response))
     .catch((err) => res.send(err));
 });
 
