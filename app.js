@@ -1,4 +1,5 @@
 const calculator = require("./calculator");
+const validator = require("./validator");
 
 const express = require("express");
 const cors = require("cors");
@@ -25,10 +26,15 @@ app.get("/", (req, res) => {
 });
 
 app.get("/geocode", (req, res) => {
-  calculator
-    .geocode(req.query.text)
-    .then((response) => res.json(response))
-    .catch((err) => res.send(err));
+  const searchText = req.query.text;
+  if (searchText) {
+    calculator
+      .geocode(req.query.text)
+      .then((response) => res.json(response))
+      .catch((err) => res.send(err));
+  } else {
+    res.status(400).json({ error: "missing required query parameter text" });
+  }
 });
 
 app.get("/poi", (req, res) => {
@@ -39,10 +45,14 @@ app.get("/poi", (req, res) => {
 });
 
 app.post("/itinerary", (req, res) => {
-  calculator
-    .getRoute(req.body.coordinates, req.body.radius, req.body.categories)
-    .then((response) => res.send(response))
-    .catch((err) => res.send(err));
+  if (validator.itineraryInputValidation(req.body)) {
+    calculator
+      .getRoute(req.body.coordinates, req.body.radius, req.body.categories)
+      .then((response) => res.json(response))
+      .catch((err) => res.send(err));
+  } else {
+    res.status(400).json({ error: "Invalid input" });
+  }
 });
 
 app.listen(PORT, () => {

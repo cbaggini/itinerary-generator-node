@@ -191,12 +191,12 @@ const getRoute = async (coordinates, radius, categories) => {
   if (isError) {
     return JSON.stringify({ status: 500, error: errorMessage });
   }
-  return JSON.stringify({
+  return {
     buffered: buffered,
     updatedRoute: updatedRoute,
     pois: pois,
     selectedPoisArray: selectedPoisArray,
-  });
+  };
 };
 
 const getPoiInfo = async (poiId) => {
