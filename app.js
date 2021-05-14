@@ -38,16 +38,20 @@ app.get("/geocode", (req, res) => {
 });
 
 app.get("/poi", (req, res) => {
-  calculator
-    .getPoiInfo(req.query.xid)
-    .then((response) => {
-      if (response.poiInfo.xid) {
-        res.json(response);
-      } else {
-        res.status(response.status).json(response.body);
-      }
-    })
-    .catch((err) => res.send(err));
+  if (req.query.xid) {
+    calculator
+      .getPoiInfo(req.query.xid)
+      .then((response) => {
+        if (response.poiInfo.xid) {
+          res.json(response);
+        } else {
+          res.status(response.poiInfo.status).json(response.poiInfo.body);
+        }
+      })
+      .catch((err) => res.send(err));
+  } else {
+    res.status(400).json({ error: "Missing required parameter xid" });
+  }
 });
 
 app.post("/itinerary", (req, res) => {

@@ -113,20 +113,39 @@ suite("Functional Tests", function () {
       });
     });
     suite("poi", function () {
-      // test("get itinerary information with valid start and end points", function (done) {
-      //   chai
-      //     .request(server)
-      //     .post("/itinerary")
-      //     .set("content-type", "application/x-www-form-urlencoded")
-      //     .send({
-      //       fakeField: "test tile",
-      //     })
-      //     .end(function (err, res) {
-      //       assert.equal(res.status, 400);
-      //       assert.equal(res.text, "missing required field title");
-      //       done();
-      //     });
-      // });
+      test("get poi information with valid xid", function (done) {
+        chai
+          .request(server)
+          .get("/poi?xid=195951")
+          .end(function (err, res) {
+            assert.equal(res.status, 200);
+            assert.isObject(res.body);
+            assert.property(res.body, "poiInfo");
+            done();
+          });
+      });
+      test("get poi information with invalid xid", function (done) {
+        chai
+          .request(server)
+          .get("/poi?xid=hey")
+          .end(function (err, res) {
+            assert.equal(res.status, 500);
+            assert.isObject(res.body);
+            assert.equal(res.body.error, "POI details could not be fetched");
+            done();
+          });
+      });
+      test("get poi information without xid", function (done) {
+        chai
+          .request(server)
+          .get("/poi?xid=")
+          .end(function (err, res) {
+            assert.equal(res.status, 400);
+            assert.isObject(res.body);
+            assert.equal(res.body.error, "Missing required parameter xid");
+            done();
+          });
+      });
     });
   });
 });

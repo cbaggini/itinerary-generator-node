@@ -1,7 +1,7 @@
 require("dotenv").config();
 const turf = require("@turf/turf");
 const fetch = require("cross-fetch");
-const { response } = require("express");
+// const { response } = require("express");
 
 const ORS_KEY = process.env.ORS_KEY;
 const OTM_KEY = process.env.OTM_KEY;
@@ -181,9 +181,6 @@ const getRoute = async (coordinates, radius, categories) => {
 };
 
 const getPoiInfo = async (poiId) => {
-  let isError = false;
-  let errorMessage = "";
-
   const poiInfo = await fetch(
     `​https://api.opentripmap.com/0.1/en​/places​/xid​/${poiId}?apikey=${OTM_KEY}`.replace(
       /\u200B/g,
@@ -197,7 +194,7 @@ const getPoiInfo = async (poiId) => {
       } else {
         return {
           status: 500,
-          body: { error: "Final route could not be calculated" },
+          body: { error: "POI details could not be fetched" },
         };
       }
     })
