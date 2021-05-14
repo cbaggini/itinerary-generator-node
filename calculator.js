@@ -1,6 +1,7 @@
 require("dotenv").config();
 const turf = require("@turf/turf");
 const fetch = require("cross-fetch");
+const { response } = require("express");
 
 const ORS_KEY = process.env.ORS_KEY;
 const OTM_KEY = process.env.OTM_KEY;
@@ -42,31 +43,8 @@ const getWaypoints = (route) => {
   return coordinateArray;
 };
 
-const geocode = async (query) => {
-  const queryData = await fetch(
-    `https://api.openrouteservice.org/geocode/search?api_key=${ORS_KEY}&text=${query.replace(
-      / /g,
-      "-"
-    )}`
-  )
-    .then((response) => response.json())
-    .catch((err) => {
-      console.log("An error occurred: " + err);
-    });
-  return { queryData: queryData };
-};
-
-const getRoute = async (coordinates, radius, categories) => {
-  let isError = false;
-  let errorMessage = "";
-
-  // Get initial route from start and end coordinates
-  const routeData = {
-    coordinates: coordinates,
-    //options : {avoid_features: ["highways"]}
-  };
-
-  const initialRoute = await fetch(
+const calculateRoute = async (routeData) => {
+  const route = await fetch(
     "https://api.openrouteservice.org/v2/directions/driving-car/geojson",
     {
       method: "POST",
@@ -79,31 +57,24 @@ const getRoute = async (coordinates, radius, categories) => {
   )
     .then((response) => response.json())
     .then((data) => {
-      if (data.features) {
-        return data;
-      } else {
-        isError = true;
-        errorMessage = "Initial route could not be calculated";
-        return null;
-      }
+      return data;
     })
     .catch((err) => {
       console.log("An error occurred: " + err);
     });
+  return route;
+};
 
-  if (isError) {
-    return JSON.stringify({ status: 500, error: errorMessage });
-  }
-
+const calculateBuffer = (route, radius) => {
   const turfRoute = turf.lineString(
-    initialRoute.features[0].geometry.coordinates.map((el) => [el[1], el[0]]),
+    route.features[0].geometry.coordinates.map((el) => [el[1], el[0]]),
     { name: "buffer" }
   );
   const buffered = turf.buffer(turfRoute, radius, { units: "kilometers" });
-  const bbox = turf.bbox(buffered);
+  return buffered;
+};
 
-  // Get pois
-  const cats = categories.join("%2C");
+const fetchPois = async (bbox, cats, buffered) => {
   const pois = await fetch(
     `https://api.opentripmap.com/0.1/en/places/bbox?lon_min=${bbox[1]}&lat_min=${bbox[0]}&lon_max=${bbox[3]}&lat_max=${bbox[2]}&kinds=${cats}&format=geojson&apikey=${OTM_KEY}`
   )
@@ -123,14 +94,49 @@ const getRoute = async (coordinates, radius, categories) => {
         );
         return points;
       } else {
-        isError = true;
-        errorMessage = "no POIs found";
-        return null;
+        return { error: "no POIs found" };
       }
     });
+  return pois;
+};
 
-  if (isError) {
-    return JSON.stringify({ status: 500, error: errorMessage });
+const geocode = async (query) => {
+  const queryData = await fetch(
+    `https://api.openrouteservice.org/geocode/search?api_key=${ORS_KEY}&text=${query.replace(
+      / /g,
+      "-"
+    )}`
+  )
+    .then((response) => response.json())
+    .catch((err) => {
+      console.log("An error occurred: " + err);
+    });
+  return { queryData: queryData };
+};
+
+const getRoute = async (coordinates, radius, categories) => {
+  // Get initial route from start and end coordinates
+  const routeData = {
+    coordinates: coordinates,
+  };
+
+  const initialRoute = await calculateRoute(routeData);
+  if (!initialRoute.features) {
+    return {
+      status: 500,
+      body: { error: "Initial route could not be calculated" },
+    };
+  }
+
+  // Calculate buffer
+  const buffered = calculateBuffer(initialRoute, radius);
+  const bbox = turf.bbox(buffered);
+
+  // Get pois
+  const cats = categories.join("%2C");
+  const pois = await fetchPois(bbox, cats, buffered);
+  if (pois.error) {
+    return { status: 500, body: { error: pois.error } };
   }
 
   // Get array of suggested pois, remove duplicates
@@ -158,39 +164,14 @@ const getRoute = async (coordinates, radius, categories) => {
     radiuses: radiusArray,
   };
 
-  const updatedRoute = await fetch(
-    "https://api.openrouteservice.org/v2/directions/driving-car/geojson",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: ORS_KEY,
-      },
-      body: JSON.stringify(updatedRouteData),
-    }
-  )
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.features) {
-        return data;
-      } else {
-        isError = true;
-        errorMessage = "Updated route could not be calculated";
-        return null;
-      }
-    })
-    .catch((err) => {
-      console.log("An error occurred: " + err);
-    });
-
-  // Create buffer of updated route
-  // const turfNewRoute = turf.lineString(updatedRoute.features[0].geometry.coordinates.map(el => [el[1], el[0]]), { name: 'buffer' });
-  // const newBuffer = turf.buffer(turfNewRoute, radius, {units: "kilometers"});
-  // setBuffer(newBuffer);
-
-  if (isError) {
-    return JSON.stringify({ status: 500, error: errorMessage });
+  const updatedRoute = await calculateRoute(updatedRouteData);
+  if (!updatedRoute.features) {
+    return {
+      status: 500,
+      body: { error: "Final route could not be calculated" },
+    };
   }
+
   return {
     buffered: buffered,
     updatedRoute: updatedRoute,
@@ -214,19 +195,17 @@ const getPoiInfo = async (poiId) => {
       if (data.xid) {
         return data;
       } else {
-        isError = true;
-        errorMessage = "POI not found";
-        return null;
+        return {
+          status: 500,
+          body: { error: "Final route could not be calculated" },
+        };
       }
     })
     .catch((err) => {
       console.log("An error occurred: " + err);
     });
 
-  if (isError) {
-    return JSON.stringify({ status: 500, error: errorMessage });
-  }
-  return JSON.stringify({ poiInfo: poiInfo });
+  return { poiInfo: poiInfo };
 };
 
 module.exports = { geocode, getRoute, getPoiInfo };

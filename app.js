@@ -40,7 +40,13 @@ app.get("/geocode", (req, res) => {
 app.get("/poi", (req, res) => {
   calculator
     .getPoiInfo(req.query.xid)
-    .then((response) => res.send(response))
+    .then((response) => {
+      if (response.poiInfo.xid) {
+        res.json(response);
+      } else {
+        res.status(response.status).json(response.body);
+      }
+    })
     .catch((err) => res.send(err));
 });
 
@@ -48,7 +54,13 @@ app.post("/itinerary", (req, res) => {
   if (validator.itineraryInputValidation(req.body)) {
     calculator
       .getRoute(req.body.coordinates, req.body.radius, req.body.categories)
-      .then((response) => res.json(response))
+      .then((response) => {
+        if (response.updatedRoute) {
+          res.json(response);
+        } else {
+          res.status(response.status).json(response.body);
+        }
+      })
       .catch((err) => res.send(err));
   } else {
     res.status(400).json({ error: "Invalid input" });
