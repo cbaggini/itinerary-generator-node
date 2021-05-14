@@ -1,5 +1,4 @@
-const calculator = require("./calculator");
-const validator = require("./validator");
+const itinerary = require("./api/itinerary");
 
 const express = require("express");
 const cors = require("cors");
@@ -25,51 +24,11 @@ app.get("/", (req, res) => {
   res.send("Welcome to the itinerary generator!");
 });
 
-app.get("/geocode", (req, res) => {
-  const searchText = req.query.text;
-  if (searchText) {
-    calculator
-      .geocode(req.query.text)
-      .then((response) => res.json(response))
-      .catch((err) => res.send(err));
-  } else {
-    res.status(400).json({ error: "missing required query parameter text" });
-  }
-});
+app.get("/geocode", itinerary.geocode);
 
-app.get("/poi", (req, res) => {
-  if (req.query.xid) {
-    calculator
-      .getPoiInfo(req.query.xid)
-      .then((response) => {
-        if (response.poiInfo.xid) {
-          res.json(response);
-        } else {
-          res.status(response.poiInfo.status).json(response.poiInfo.body);
-        }
-      })
-      .catch((err) => res.send(err));
-  } else {
-    res.status(400).json({ error: "Missing required parameter xid" });
-  }
-});
+app.get("/poi", itinerary.poi);
 
-app.post("/itinerary", (req, res) => {
-  if (validator.itineraryInputValidation(req.body)) {
-    calculator
-      .getRoute(req.body.coordinates, req.body.radius, req.body.categories)
-      .then((response) => {
-        if (response.updatedRoute) {
-          res.json(response);
-        } else {
-          res.status(response.status).json(response.body);
-        }
-      })
-      .catch((err) => res.send(err));
-  } else {
-    res.status(400).json({ error: "Invalid input" });
-  }
-});
+app.post("/itinerary", itinerary.itinerary);
 
 app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);
