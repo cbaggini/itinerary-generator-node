@@ -78,8 +78,9 @@ suite("Functional Tests", function () {
                 [-1.85944, 52.482098],
                 [-0.099076, 51.509648],
               ],
-              radius: "12",
+              buffer: "12",
               categories: ["natural"],
+              timeInterval: "12600",
             })
           )
           .end(function (err, res) {
@@ -100,7 +101,7 @@ suite("Functional Tests", function () {
           .send(
             JSON.stringify({
               coordinates: [],
-              radius: "12",
+              buffer: "12",
               categories: ["natural"],
             })
           )

@@ -33,7 +33,12 @@ const poi = (req, res) => {
 const itinerary = (req, res) => {
   if (validator.itineraryInputValidation(req.body)) {
     calculator
-      .getRoute(req.body.coordinates, req.body.radius, req.body.categories)
+      .getRoute(
+        req.body.coordinates,
+        req.body.buffer,
+        req.body.categories,
+        req.body.timeInterval
+      )
       .then((response) => {
         if (response.updatedRoute) {
           res.json(response);

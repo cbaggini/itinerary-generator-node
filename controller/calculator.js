@@ -7,17 +7,16 @@ const ORS_KEY = process.env.ORS_KEY;
 const OTM_KEY = process.env.OTM_KEY;
 
 // private function to get itinerary waypoints
-const getWaypoints = (route) => {
+const getWaypoints = (route, timeInterval) => {
   // Create an array of cumulative times in n hours intervals
   const totalTime = route.features[0].properties.summary.duration;
   let timePoints = [];
-  // This will have to change depending on user input
-  const timeInterval = 21600;
-  let timeCounter = timeInterval;
+  let timeCounter = parseInt(timeInterval);
   while (timeCounter < totalTime) {
     timePoints.push(timeCounter);
-    timeCounter += timeInterval;
+    timeCounter += parseInt(timeInterval);
   }
+
   if (timePoints.length === 0) {
     timePoints = [totalTime / 2];
   }
@@ -114,7 +113,7 @@ const geocode = async (query) => {
   return { queryData: queryData };
 };
 
-const getRoute = async (coordinates, radius, categories) => {
+const getRoute = async (coordinates, radius, categories, timeInterval) => {
   // Get initial route from start and end coordinates
   const routeData = {
     coordinates: coordinates,
@@ -140,7 +139,7 @@ const getRoute = async (coordinates, radius, categories) => {
   }
 
   // Get array of suggested pois, remove duplicates
-  const coordinateArray = getWaypoints(initialRoute);
+  const coordinateArray = getWaypoints(initialRoute, timeInterval);
   const turfPois = turf.featureCollection(pois);
   let selectedPoisArray = [];
   for (let point of coordinateArray) {
