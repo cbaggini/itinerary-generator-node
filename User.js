@@ -5,10 +5,6 @@ const user = new mongoose.Schema({
     required: false,
     type: String,
   },
-  twitterId: {
-    required: false,
-    type: String,
-  },
   githubId: {
     required: false,
     type: String,

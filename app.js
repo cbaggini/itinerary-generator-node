@@ -5,7 +5,6 @@ const cors = require("cors");
 const session = require("express-session");
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
-const TwitterStrategy = require("passport-twitter").Strategy;
 const GitHubStrategy = require("passport-github").Strategy;
 const mongoose = require("mongoose");
 
@@ -96,34 +95,6 @@ passport.use(
 );
 
 passport.use(
-  new TwitterStrategy(
-    {
-      consumerKey: `${process.env.TWITTER_CLIENT_ID}`,
-      consumerSecret: `${process.env.TWITTER_CLIENT_SECRET}`,
-      callbackURL: "/auth/twitter/callback",
-    },
-    function (_, __, profile, cb) {
-      User.findOne({ twitterId: profile.id }, async (err, doc) => {
-        if (err) {
-          return cb(err, null);
-        }
-
-        if (!doc) {
-          const newUser = new User({
-            twitterId: profile.id,
-            username: profile.username,
-          });
-
-          await newUser.save();
-          cb(null, newUser);
-        }
-        cb(null, doc);
-      });
-    }
-  )
-);
-
-passport.use(
   new GitHubStrategy(
     {
       clientID: `${process.env.GITHUB_CLIENT_ID}`,
@@ -169,19 +140,6 @@ app.get(
 app.get(
   "/auth/google/callback",
   passport.authenticate("google", {
-    failureRedirect: BASE_URL,
-    session: true,
-  }),
-  function (req, res) {
-    res.redirect(BASE_URL + "profile");
-  }
-);
-
-app.get("/auth/twitter", passport.authenticate("twitter"));
-
-app.get(
-  "/auth/twitter/callback",
-  passport.authenticate("twitter", {
     failureRedirect: BASE_URL,
     session: true,
   }),
