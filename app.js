@@ -30,10 +30,10 @@ app.use(
 const PORT = process.env.PORT || 8080;
 const ORIGIN = process.env.PORT
   ? "https://itinerary-generator.netlify.app"
-  : "*";
+  : "http://localhost:3000";
 const BASE_URL = process.env.PORT
   ? "https://itinerary-generator.netlify.app/"
-  : "http://localhost:8080/";
+  : "http://localhost:3000/";
 
 mongoose.connect(
   `${process.env.DB}`,
@@ -49,6 +49,7 @@ mongoose.connect(
 const corsOptions = {
   origin: ORIGIN,
   optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
+  credentials: true,
 };
 
 app.use(cors(corsOptions));
