@@ -57,6 +57,7 @@ mongoose.connect(
   {
     useNewUrlParser: true,
     useUnifiedTopology: true,
+    useFindAndModify: false,
   },
   () => {
     console.log("Connected to mongoose successfully");
@@ -205,6 +206,23 @@ app.post("/trips", (req, res) => {
     res.json({ message: "saved" });
   } else {
     res.status(400).json({ error: "Missing userId" });
+  }
+});
+
+app.put("/trips/:tripId", async (req, res) => {
+  const tripId = req.params.tripId;
+  if (tripId) {
+    await Trip.findOneAndUpdate(
+      { _id: tripId },
+      { ...req.body.newData, updated: new Date() },
+      { upsert: false },
+      function (err, doc) {
+        if (err) return res.status(500).json({ error: err });
+      }
+    );
+    res.json({ message: "Successfully saved." });
+  } else {
+    res.status(400).json({ error: "Missing tripId" });
   }
 });
 
