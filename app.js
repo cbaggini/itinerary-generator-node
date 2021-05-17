@@ -184,14 +184,18 @@ app.get("/auth/logout", (req, res) => {
 });
 
 app.get("/trips", async (req, res) => {
-  const selectedTrips = await Trip.find().sort({ updated: -1 }).limit(10);
+  const selectedTrips = await Trip.find({ public: true })
+    .sort({ updated: -1 })
+    .limit(10);
   res.json(selectedTrips);
 });
 
 app.get("/trips/:userId", async (req, res) => {
   const userId = req.params.userId;
   if (userId) {
-    const selectedTrips = await Trip.find({ userId: userId });
+    const selectedTrips = await Trip.find({ userId: userId }).sort({
+      updated: -1,
+    });
     res.json(selectedTrips);
   } else {
     res.status(400).send({ error: "Missing required parameter userId" });
@@ -221,6 +225,16 @@ app.put("/trips/:tripId", async (req, res) => {
       }
     );
     res.json({ message: "Successfully saved." });
+  } else {
+    res.status(400).json({ error: "Missing tripId" });
+  }
+});
+
+app.delete("/trips/:tripId", async (req, res) => {
+  const tripId = req.params.tripId;
+  if (tripId) {
+    await Trip.findOneAndDelete({ _id: tripId });
+    res.json({ message: "Successfully deleted." });
   } else {
     res.status(400).json({ error: "Missing tripId" });
   }

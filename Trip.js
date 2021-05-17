@@ -14,6 +14,10 @@ const trip = new mongoose.Schema(
       required: true,
       type: Object,
     },
+    poiDetails: {
+      required: true,
+      type: Object,
+    },
     form: {
       required: true,
       type: Object,
