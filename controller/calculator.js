@@ -8,36 +8,20 @@ const OTM_KEY = process.env.OTM_KEY;
 
 // private function to get itinerary waypoints
 const getWaypoints = (route, timeInterval) => {
-  // Create an array of cumulative times in n hours intervals
-  const totalTime = route.features[0].properties.summary.duration;
-  let timePoints = [];
-  let timeCounter = parseInt(timeInterval);
-  while (timeCounter < totalTime) {
-    timePoints.push(timeCounter);
-    timeCounter += parseInt(timeInterval);
+  // calculate how many stops are needed
+  const totalTime1 = route.features[0].properties.summary.duration;
+  let numberOfWaypoints = Math.floor(totalTime1 / parseInt(timeInterval));
+  if (numberOfWaypoints <= 0) {
+    numberOfWaypoints = 1;
   }
-
-  if (timePoints.length === 0) {
-    timePoints = [totalTime / 2];
-  }
-  // Get coordinates of waypoints closest to each of the time points
-  let cumTime = 0;
-  let timeIndex = 0;
+  // distance at which to get waypoint
+  const totDistance = route.features[0].properties.summary.distance / 1000;
+  let cumDistance = totDistance / (numberOfWaypoints + 1);
   let coordinateArray = [];
-  const steps = route.features[0].properties.segments[0].steps;
-  for (let i = 0; i < steps.length; i++) {
-    if (cumTime < timePoints[timeIndex]) {
-      cumTime += steps[i].duration;
-    } else {
-      coordinateArray.push(
-        route.features[0].geometry.coordinates[steps[i].way_points[1]]
-      );
-      if (timeIndex < timePoints.length - 1) {
-        timeIndex++;
-      } else {
-        break;
-      }
-    }
+  for (let i = 0; i < numberOfWaypoints; i++) {
+    const newPoint = turf.along(route.features[0].geometry, cumDistance);
+    coordinateArray.push(newPoint.geometry.coordinates);
+    cumDistance += totDistance / (numberOfWaypoints + 1);
   }
   return coordinateArray;
 };

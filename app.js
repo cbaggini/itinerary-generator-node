@@ -28,18 +28,22 @@ let app = express();
 app.disable("x-powered-by");
 app.set("trust proxy", 1);
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: true,
-    saveUninitialized: true,
-    cookie: {
-      sameSite: "none",
-      secure: true,
-      maxAge: 1000 * 60 * 60 * 24 * 7, // One Week
-    },
-  })
-);
+let sessionOptions = {
+  secret: process.env.SESSION_SECRET,
+  resave: true,
+  saveUninitialized: true,
+  cookie: {
+    sameSite: "none",
+    // secure: true,
+    maxAge: 1000 * 60 * 60 * 24 * 7, // One Week
+  },
+};
+
+if (process.env.PORT) {
+  sessionOptions.cookie.secure = true;
+}
+
+app.use(session(sessionOptions));
 
 app.use(cors(corsOptions));
 app.use(express.json());
@@ -70,6 +74,7 @@ passport.deserializeUser((id, done) => {
 });
 
 passport.use(
+  "google",
   new GoogleStrategy(
     {
       clientID: `${process.env.GOOGLE_CLIENT_ID}`,
@@ -98,6 +103,7 @@ passport.use(
 );
 
 passport.use(
+  "github",
   new GitHubStrategy(
     {
       clientID: `${process.env.GITHUB_CLIENT_ID}`,
@@ -164,24 +170,12 @@ app.get(
   }
 );
 
-app.get("/getuser", async (req, res) => {
-  const userArray = Object.values(req.sessionStore.sessions)
-    .map((el) => JSON.parse(el).passport)
-    .filter((el) => el != undefined);
-  if (userArray.length > 0) {
-    const userId = userArray[0].user;
-    const userData = await User.findOne({ _id: userId });
-    res.json(userData);
-  } else {
-    res.send({});
-  }
+app.get("/getuser", (req, res) => {
+  res.send(req.user);
 });
 
 app.get("/auth/logout", (req, res) => {
-  const userArray = Object.values(req.sessionStore.sessions)
-    .map((el) => JSON.parse(el).passport)
-    .filter((el) => el != undefined);
-  if (userArray.length > 0) {
+  if (req.user) {
     req.logout();
     res.send("done");
   }
