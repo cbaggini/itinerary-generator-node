@@ -9,6 +9,7 @@ const GitHubStrategy = require("passport-github").Strategy;
 const mongoose = require("mongoose");
 
 const User = require("./User");
+const Trip = require("./Trip");
 
 const PORT = process.env.PORT || 8080;
 const ORIGIN = process.env.PORT
@@ -46,7 +47,7 @@ if (process.env.PORT) {
 app.use(session(sessionOptions));
 
 app.use(cors(corsOptions));
-app.use(express.json());
+app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ extended: false, limit: "20mb" }));
 app.use(passport.initialize());
 app.use(passport.session());
@@ -178,6 +179,32 @@ app.get("/auth/logout", (req, res) => {
   if (req.user) {
     req.logout();
     res.send("done");
+  }
+});
+
+app.get("/trips", async (req, res) => {
+  const selectedTrips = await Trip.find().sort({ updated: -1 }).limit(10);
+  res.json(selectedTrips);
+});
+
+app.get("/trips/:userId", async (req, res) => {
+  const userId = req.params.userId;
+  if (userId) {
+    const selectedTrips = await Trip.find({ userId: userId });
+    res.json(selectedTrips);
+  } else {
+    res.status(400).send({ error: "Missing required parameter userId" });
+  }
+});
+
+app.post("/trips", (req, res) => {
+  if (req.body.userId) {
+    Trip.create(req.body, function (err, small) {
+      if (err) console.log(err);
+    });
+    res.json({ message: "saved" });
+  } else {
+    res.status(400).json({ error: "Missing userId" });
   }
 });
 
