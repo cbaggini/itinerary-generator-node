@@ -10,6 +10,20 @@ const mongoose = require("mongoose");
 
 const User = require("./User");
 
+const PORT = process.env.PORT || 8080;
+const ORIGIN = process.env.PORT
+  ? "https://itinerary-generator.netlify.app"
+  : "http://localhost:3000";
+const BASE_URL = process.env.PORT
+  ? "https://itinerary-generator.netlify.app/"
+  : "http://localhost:3000/";
+
+const corsOptions = {
+  origin: ORIGIN,
+  optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
+  credentials: true,
+};
+
 let app = express();
 app.disable("x-powered-by");
 app.set("trust proxy", 1);
@@ -27,13 +41,11 @@ app.use(
   })
 );
 
-const PORT = process.env.PORT || 8080;
-const ORIGIN = process.env.PORT
-  ? "https://itinerary-generator.netlify.app"
-  : "http://localhost:3000";
-const BASE_URL = process.env.PORT
-  ? "https://itinerary-generator.netlify.app/"
-  : "http://localhost:3000/";
+app.use(cors(corsOptions));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false, limit: "20mb" }));
+app.use(passport.initialize());
+app.use(passport.session());
 
 mongoose.connect(
   `${process.env.DB}`,
@@ -45,16 +57,6 @@ mongoose.connect(
     console.log("Connected to mongoose successfully");
   }
 );
-
-const corsOptions = {
-  origin: ORIGIN,
-  optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
-  credentials: true,
-};
-
-app.use(cors(corsOptions));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false, limit: "20mb" }));
 
 passport.serializeUser((user, done) => {
   return done(null, user._id);
@@ -162,12 +164,24 @@ app.get(
   }
 );
 
-app.get("/getuser", (req, res) => {
-  res.send(req.user);
+app.get("/getuser", async (req, res) => {
+  const userArray = Object.values(req.sessionStore.sessions)
+    .map((el) => JSON.parse(el).passport)
+    .filter((el) => el != undefined);
+  if (userArray.length > 0) {
+    const userId = userArray[0].user;
+    const userData = await User.findOne({ _id: userId });
+    res.json(userData);
+  } else {
+    res.send({});
+  }
 });
 
 app.get("/auth/logout", (req, res) => {
-  if (req.user) {
+  const userArray = Object.values(req.sessionStore.sessions)
+    .map((el) => JSON.parse(el).passport)
+    .filter((el) => el != undefined);
+  if (userArray.length > 0) {
     req.logout();
     res.send("done");
   }
