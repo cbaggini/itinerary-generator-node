@@ -3,6 +3,8 @@ const chai = require("chai");
 const assert = chai.assert;
 const server = require("../app");
 
+const tripData = require("./tripData");
+
 chai.use(chaiHttp);
 
 suite("Functional Tests", function () {
@@ -144,6 +146,122 @@ suite("Functional Tests", function () {
             assert.equal(res.status, 400);
             assert.isObject(res.body);
             assert.equal(res.body.error, "Missing required parameter xid");
+            done();
+          });
+      });
+    });
+    suite("trips", function () {
+      test("get all trips for a user with user id", function (done) {
+        chai
+          .request(server)
+          .get("/trips/60a14506076db745479a7de2")
+          .end(function (err, res) {
+            assert.equal(res.status, 200);
+            assert.isArray(res.body);
+            assert.property(res.body[0], "routeData");
+            done();
+          });
+      });
+      test("create a new trip", function (done) {
+        chai
+          .request(server)
+          .post("/trips")
+          .set("content-type", "application/json")
+          .send(
+            JSON.stringify({
+              ...tripData,
+              userId: "60a14506076db745479a7de2",
+              created: new Date(),
+              updated: new Date(),
+            })
+          )
+          .end(function (err, res) {
+            assert.equal(res.status, 200);
+            assert.isObject(res.body);
+            assert.property(res.body, "message");
+            assert.equal(res.body.message, "saved");
+            done();
+          });
+      });
+      test("create a new trip without user Id", function (done) {
+        chai
+          .request(server)
+          .post("/trips")
+          .set("content-type", "application/json")
+          .send(
+            JSON.stringify({
+              ...tripData,
+              created: new Date(),
+              updated: new Date(),
+            })
+          )
+          .end(function (err, res) {
+            assert.equal(res.status, 400);
+            assert.isObject(res.body);
+            assert.property(res.body, "error");
+            assert.equal(res.body.error, "Missing userId");
+            done();
+          });
+      });
+      let createdTripId;
+      test("get latest ten public trips in database", function (done) {
+        chai
+          .request(server)
+          .get("/trips")
+          .end(function (err, res) {
+            assert.equal(res.status, 200);
+            assert.isArray(res.body);
+            assert.isAtMost(res.body.length, 10);
+            assert.property(res.body[0], "public");
+            assert.equal(res.body[0].public, true);
+            createdTripId = res.body[0]._id;
+            done();
+          });
+      });
+      test("change trip from public to private", function (done) {
+        chai
+          .request(server)
+          .put("/trips/" + createdTripId)
+          .set("content-type", "application/json")
+          .send(JSON.stringify({ newData: { public: false } }))
+          .end(function (err, res) {
+            assert.equal(res.status, 200);
+            assert.isObject(res.body);
+            assert.property(res.body, "message");
+            assert.equal(res.body.message, "Successfully saved.");
+            done();
+          });
+      });
+      test("delete trip", function (done) {
+        chai
+          .request(server)
+          .delete("/trips/" + createdTripId)
+          .end(function (err, res) {
+            assert.equal(res.status, 200);
+            assert.isObject(res.body);
+            assert.property(res.body, "message");
+            assert.equal(res.body.message, "Successfully deleted.");
+            done();
+          });
+      });
+      test("delete trip without trip id", function (done) {
+        chai
+          .request(server)
+          .delete("/trips/")
+          .end(function (err, res) {
+            assert.equal(res.status, 404);
+            done();
+          });
+      });
+      test("delete trip with invalid trip id", function (done) {
+        chai
+          .request(server)
+          .delete("/trips/bb")
+          .end(function (err, res) {
+            assert.equal(res.status, 400);
+            assert.isObject(res.body);
+            assert.property(res.body, "error");
+            assert.equal(res.body.error, "Trip not found");
             done();
           });
       });

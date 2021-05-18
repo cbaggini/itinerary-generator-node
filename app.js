@@ -59,9 +59,7 @@ mongoose.connect(
     useUnifiedTopology: true,
     useFindAndModify: false,
   },
-  () => {
-    console.log("Connected to mongoose successfully");
-  }
+  () => {}
 );
 
 passport.serializeUser((user, done) => {
@@ -192,14 +190,10 @@ app.get("/trips", async (req, res) => {
 
 app.get("/trips/:userId", async (req, res) => {
   const userId = req.params.userId;
-  if (userId) {
-    const selectedTrips = await Trip.find({ userId: userId }).sort({
-      updated: -1,
-    });
-    res.json(selectedTrips);
-  } else {
-    res.status(400).send({ error: "Missing required parameter userId" });
-  }
+  const selectedTrips = await Trip.find({ userId: userId }).sort({
+    updated: -1,
+  });
+  res.json(selectedTrips);
 });
 
 app.post("/trips", (req, res) => {
@@ -232,12 +226,13 @@ app.put("/trips/:tripId", async (req, res) => {
 
 app.delete("/trips/:tripId", async (req, res) => {
   const tripId = req.params.tripId;
-  if (tripId) {
-    await Trip.findOneAndDelete({ _id: tripId });
-    res.json({ message: "Successfully deleted." });
-  } else {
-    res.status(400).json({ error: "Missing tripId" });
-  }
+  await Trip.findOneAndDelete({ _id: tripId }, function (err, doc) {
+    if (err || !doc) {
+      res.status(400).json({ error: "Trip not found" });
+    } else {
+      res.json({ message: "Successfully deleted." });
+    }
+  });
 });
 
 app.listen(PORT, () => {
