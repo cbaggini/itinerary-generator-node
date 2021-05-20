@@ -153,7 +153,11 @@ app.get(
     session: true,
   }),
   function (req, res) {
-    res.redirect(BASE_URL + "profile");
+    let prevSession = req.session;
+    req.session.regenerate((err) => {
+      Object.assign(req.session, prevSession);
+      res.redirect(BASE_URL + "profile");
+    });
   }
 );
 
@@ -166,7 +170,11 @@ app.get(
     session: true,
   }),
   function (req, res) {
-    res.redirect(BASE_URL + "profile");
+    let prevSession = req.session;
+    req.session.regenerate((err) => {
+      Object.assign(req.session, prevSession);
+      res.redirect(BASE_URL + "profile");
+    });
   }
 );
 
@@ -196,9 +204,9 @@ app.get("/trips/:userId", async (req, res) => {
   res.json(selectedTrips);
 });
 
-app.post("/trips", (req, res) => {
+app.post("/trips", async (req, res) => {
   if (req.body.userId) {
-    Trip.create(req.body, function (err, small) {
+    await Trip.create(req.body, function (err, small) {
       if (err) console.log(err);
     });
     res.json({ message: "saved" });
