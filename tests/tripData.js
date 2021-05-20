@@ -1,4 +1,4 @@
-module.exports = tripData = {
+const tripData = {
   allData: {
     dataFrom: {
       geocoding: {
@@ -13558,3 +13558,5 @@ module.exports = tripData = {
   ],
   public: true,
 };
+
+module.exports = tripData;
