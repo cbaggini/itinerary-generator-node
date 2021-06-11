@@ -199,7 +199,7 @@ app.get("/trips", async (req, res) => {
 app.get("/trips/:userId", async (req, res) => {
   const userId = req.params.userId;
   const selectedTrips = await Trip.find({ userId: userId }).sort({
-    updated: -1,
+    created: -1,
   });
   res.json(selectedTrips);
 });
